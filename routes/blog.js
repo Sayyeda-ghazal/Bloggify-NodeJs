@@ -2,13 +2,13 @@ const { Router } = require('express');
 const path = require("path");
 const multer = require('multer');
 const Blog = require('../models/blogs');
+const Comment = require('../models/comments');
 
 const router = Router();
 
-// 1. Multer storage config
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, path.resolve('./public/uploads')); // Ensure this folder exists!
+    cb(null, path.resolve('./public/uploads')); 
   },
   filename: function (req, file, cb) {
     const fileName = `${Date.now()}-${file.originalname}`;
@@ -18,14 +18,12 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-// 2. GET route to render blog creation form
 router.get("/add-new", (req, res) => {
   return res.render('addBlog', {
     user: req.user,
   });
 });
 
-// 3. POST route to handle blog submission
 router.post("/", upload.single('featuredImage'), async (req, res) => {
   const { title, body } = req.body;
 
@@ -48,12 +46,32 @@ router.post("/", upload.single('featuredImage'), async (req, res) => {
   }
 });
 
-router.get('/:id',async (req, res) => {
-  const blog = await Blog.findById(req.params.id)
-  return res.render("blog", {
-    user: req.user,
-    blog,
+router.get('/:id', async (req, res) => {
+  try {
+    const blog = await Blog.findById(req.params.id).populate("createdBy");
+    console.log('Blog CreatedBy:', blog.createdBy);
+    const comments = await Comment.find({ blogId: req.params.id }).populate("createdBy");
+    console.log(comments);
+
+    return res.render("blog", {
+      user: req.user,
+      blog: blog,
+      comments: comments, 
+    });
+  } catch (err) {
+    console.error("Error loading blog page:", err);
+    res.status(500).send("Server Error");
+  }
+});
+
+
+router.post('/comments/:blogId', async (req, res) => {
+  const comments = await Comment.create({
+    content: req.body.content,
+    blogId: req.params.blogId,
+    createdBy: req.user._id,
   });
+  return res.redirect(`/blog/${req.params.blogId}`);
 });
 
 module.exports = router;

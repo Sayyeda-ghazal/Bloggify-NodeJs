@@ -11,9 +11,11 @@ const app = express();
 const PORT = 8080;
 
 app.use(express.urlencoded({extended: false}));
+app.use(express.json());
 app.use(cookieParser());
 app.use(checkForAuthenticationCookie('token'));
 app.use(express.static(path.resolve('./public')));
+app.use('/images', express.static(path.resolve(__dirname, 'public/images')));
 
 app.use((req, res, next) => {
     res.locals.user = req.user || null;
