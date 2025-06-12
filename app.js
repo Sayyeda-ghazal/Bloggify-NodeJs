@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require('express');
 const path = require('path');
 const mongoose = require('mongoose');
@@ -8,7 +10,7 @@ const cookieParser = require('cookie-parser');
 const { checkForAuthenticationCookie } = require('./middlewares/auth');
 
 const app = express();
-const PORT = 8080;
+const PORT = process.env.PORT || 8080;
 
 app.use(express.urlencoded({extended: false}));
 app.use(express.json());
@@ -23,7 +25,7 @@ app.use((req, res, next) => {
     next();
   }); 
 
-mongoose.connect('mongodb://localhost:27017/Blogify').then(e => console.log('MongoDb Connected'));
+mongoose.connect(process.env.MONGO_URL).then(e => console.log('MongoDb Connected'));
 
 app.set('view engine', 'ejs');
 app.set("views", path.resolve('./views'));
